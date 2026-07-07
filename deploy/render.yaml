@@ -2,7 +2,7 @@ services:
   - type: web
     name: videograb
     runtime: docker
-    rootDir: ..
+    rootDir: .
     dockerfilePath: ./deploy/Dockerfile
     plan: free
     region: singapore
