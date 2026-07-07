@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: videograb
+    runtime: docker
+    rootDir: ..
+    dockerfilePath: ./deploy/Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: API_KEY
+        sync: false
+      - key: PUBLIC_BASE_URL
+        generateValue: true
+        prefix: https://
+        template: "videograb.onrender.com"
+      - key: ALLOW_ORIGINS
+        value: "*"
+      - key: MAX_BATCH
+        value: "20"
+      - key: MAX_FILE_BYTES
+        value: "209715200"
+      - key: WORKERS
+        value: "1"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: PORT
+        value: "8000"
+      - key: PYTHONUNBUFFERED
+        value: "1"

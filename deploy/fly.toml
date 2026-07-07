@@ -1,0 +1,39 @@
+# Fly.io 部署配置
+# 用法：
+#   1) 安装 flyctl: https://fly.io/docs/hiring/  (或 scoop install flyctl)
+#   2) 注册/登录：fly auth signup
+#   3) 在仓库根目录执行：fly launch --copy-config --name videograb --region sin
+#   4) fly deploy
+
+app = "videograb"
+primary_region = "sin"
+
+[build]
+  dockerfile = "deploy/Dockerfile"
+
+[env]
+  PORT = "8000"
+  WORKERS = "1"
+  MAX_BATCH = "20"
+  ALLOW_ORIGINS = "*"
+  LOG_LEVEL = "INFO"
+  PUBLIC_BASE_URL = "https://videograb.fly.dev"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

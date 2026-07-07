@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>视频去水印批量下载 · VideoGrab</title>
+  <link rel="manifest" href="/api/manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: "#eef2ff", 100: "#e0e7ff", 200: "#c7d2fe", 300: "#a5b4fc", 400: "#818cf8", 500: "#6366f1", 600: "#4f46e5", 700: "#4338ca", 800: "#3730a3", 900: "#312e81" },
+            ink: { 900: "#0b1020", 800: "#0f172a", 700: "#1e293b", 600: "#334155", 500: "#475569", 400: "#94a3b8", 300: "#cbd5e1" }
+          },
+          fontFamily: { sans: ["Inter", "PingFang SC", "Microsoft YaHei", "system-ui", "sans-serif"] }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="bg-ink-900 text-ink-300 min-h-screen font-sans antialiased">
+  <div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-brand-600/20 blur-3xl"></div>
+    <div class="absolute -bottom-32 -right-32 w-[520px] h-[520px] rounded-full bg-fuchsia-500/10 blur-3xl"></div>
+  </div>
+
+  <header class="border-b border-white/5 backdrop-blur-md bg-ink-900/60 sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-fuchsia-500 grid place-items-center text-white font-bold">V</div>
+        <div>
+          <div class="text-white font-semibold leading-tight">VideoGrab</div>
+          <div class="text-xs text-ink-400 leading-tight">批量视频去水印下载</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <span id="api-status" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 服务正常
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Hero -->
+    <section class="mb-8">
+      <h1 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+        一键批量下载 <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 to-fuchsia-400">全国视频无水印</span>
+      </h1>
+      <p class="mt-2 text-ink-400">支持抖音 / 快手 / 小红书 / B 站 / 微博 / YouTube 等平台，粘贴链接即可解析与下载。</p>
+    </section>
+
+    <!-- 平台卡片 -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-8" id="platforms"></section>
+
+    <!-- 输入区 -->
+    <section class="bg-ink-800/60 border border-white/5 rounded-2xl p-5 shadow-xl shadow-black/30">
+      <label class="block text-sm text-ink-400 mb-2">视频链接（每行一个，最多 20 条）</label>
+      <textarea id="url-input" rows="5" placeholder="https://v.douyin.com/xxxxx/&#10;https://www.bilibili.com/video/BVxxxxx&#10;https://www.xiaohongshu.com/explore/xxxxx"
+        class="w-full bg-ink-900/70 border border-white/10 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/30 rounded-xl p-4 text-white placeholder-ink-500 outline-none transition"></textarea>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button id="btn-parse" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-fuchsia-500 hover:from-brand-400 hover:to-fuchsia-400 text-white font-medium shadow-lg shadow-brand-600/30 transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          解析
+        </button>
+        <button id="btn-clear" class="px-4 py-2.5 rounded-xl border border-white/10 text-ink-300 hover:text-white hover:border-white/30 transition">清空</button>
+        <button id="btn-paste" class="px-4 py-2.5 rounded-xl border border-white/10 text-ink-300 hover:text-white hover:border-white/30 transition">从剪贴板粘贴</button>
+        <div class="ml-auto text-xs text-ink-400" id="counter">0 / 20</div>
+      </div>
+    </section>
+
+    <!-- 结果区 -->
+    <section id="results" class="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></section>
+
+    <!-- 批量下载栏 -->
+    <section id="batch-bar" class="hidden sticky bottom-4 mt-8">
+      <div class="bg-ink-800/90 backdrop-blur border border-white/10 rounded-2xl p-3 pl-5 flex items-center gap-4 shadow-2xl shadow-black/50">
+        <div class="text-sm text-ink-300">已选中 <span id="selected-count" class="text-white font-semibold">0</span> 项</div>
+        <button id="btn-select-all" class="text-xs text-brand-300 hover:text-brand-200">全选</button>
+        <button id="btn-deselect-all" class="text-xs text-ink-400 hover:text-white">取消</button>
+        <div class="ml-auto flex items-center gap-2">
+          <button id="btn-download-selected" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+            下载选中（ZIP）
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-20 right-4 z-50 space-y-2"></div>
+  </main>
+
+  <footer class="max-w-6xl mx-auto px-4 sm:px-6 py-10 text-xs text-ink-500">
+    <div class="border-t border-white/5 pt-6 flex flex-wrap items-center justify-between gap-3">
+      <div>© <span id="year"></span> VideoGrab · 仅供学习与个人使用，请勿用于侵权用途</div>
+      <div class="flex items-center gap-3">
+        <a href="/api/health" target="_blank" class="hover:text-white">API 健康</a>
+        <span>·</span>
+        <a href="/docs" target="_blank" class="hover:text-white">OpenAPI 文档</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
